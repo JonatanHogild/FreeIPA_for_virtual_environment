@@ -8,13 +8,13 @@ Publiceringsdatum<br>
 <br>
 
 ## Abstract
-Kort sammanfattning av dokumentet
+Installation of FreeIPA in a virtual environment and configuration of a centralized identity and access management system using FreeIPA. 
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Goals and Objectives](#goals-and-objectives)
-3. [Method](#method)
+3. [Method](#method) <br>
    3.1 [Prepare a new VM](#31-prepare-a-new-vm) <br>
    3.2 [DNS](#32-dns) <br>
    3.3 [FreeIPA installation](#33-freeipa-installation) <br>
@@ -38,11 +38,10 @@ Kort sammanfattning av dokumentet
 11. [Conclusion](#conclusion)
 
 ## Introduction
-Inledning
-Bakgrund och syfte. Eventuell översiktbild här.
+In this lab, we'll dive into [FreeIPA](https://www.freeipa.org/), an IAM-solution for Linux. It is no small task to manage hundreds, or even thousands of users, hosts, and user-resources. With this implementation of FreeIPA, we set out to manage identities in our small virtual environment as if it were a large enterprise environment. A lot will be covered in this lab: DNS, installation of FreeIPA-servers and clients, IPA users and groups, host-based access control, sudo rules, and much more! 
 
 ## Goals and Objectives
-Mål och syften
+The goal of this project is to set up FreeIPA in a safe and scalable way 
 
 ## Method
 ### 3.1 Prepare a new VM
