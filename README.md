@@ -33,17 +33,17 @@ Mål och syften
 
 ## Method
 ### 3.1 Prepare a new VM
-It is strongly suggested to run the freeIPA-server on its own VM. Other VMs, like mgmt-01, will depend on IAM functionality. Keeping seperate VMs avoids circular dependency. Misconfiguration in this lab could lead to IPA policy denying your login, effectively locking you out of your own identity system. This solution prevents the risk of such lock-out accidents.
+It is strongly suggested to run the FreeIPA-server on its own VM. Other VMs, like mgmt-01, will depend on IAM functionality. Keeping seperate VMs avoids circular dependency. Misconfiguration in this lab could lead to IPA policy denying your login, effectively locking you out of your own identity system. This solution prevents the risk of such lock-out accidents.
 
 #### 3.1.1 Clone rocky-base
 Create a new clone from the *rocky-base* template. Give it the name *ipa-01*, a VM ID and static IPv4- and IPv6-addresses.
 
 #### 3.1.2 Add new VM in Ansible
-On the *mgmt-01* VM, add the new IPA host to the Ansible *hosts.ini* file. We'll put it under the *[rocky]* category and also create a new *[ipa-server]* category for it. 
+On the *mgmt-01* VM, add the new *ipa-01*-host to the Ansible *hosts.ini* file. We'll put it under the *[rocky]* category and also create a new *[ipaservers]* category for it. 
 
 Copy over the public SSH-key of the *mgmt* VM to the IPA VM. Confirm that it's working with: 
 ```
-ansible ipa -m ping
+ansible ipaservers -m ping
 ```
 
 #### 3.1.3 Install packages
@@ -57,7 +57,7 @@ sudo dnf install ipa-server ipa-server-dns
 
 FreeIPA needs DNS to work correctly, which includes; forward and reverse DNS resolution, stable FQDNs, correct SRV records and time sync resolvable by name. 
 
-FreeIPA can be configured to use its own integrated DNS, which we will use for this lab. We'll still need to access our organisations DNS server, and the freeIPA DNS will forward traffic to it.
+FreeIPA can be configured to use its own integrated DNS, which we will use for this lab. We'll still need to access our organisations DNS server, and the FreeIPA DNS will forward traffic to it.
 
 #### 3.2.1 Decide on a domain
 
@@ -392,16 +392,16 @@ roles_path = /opt/ansible/roles
 
 #### 3.5.2 Prepare hosts.ini
 
-On the *mgmt* VM, edit the Ansible */inventory/hosts.ini* and add two new categories:
+On the *mgmt* VM, edit the Ansible */inventory/hosts.ini* and add:
 
-ini```
+```ini
 [ipaservers]
 ipa-01
 
 [ipaclients]
 metrics-01
 app-01
-localhost
+mgmt-01
 ```
 
 #### 3.5.3 Ansible Vault
@@ -414,7 +414,7 @@ ansible-vault create /opt/ansible/inventory/group_vars/ipaclients/vault.yml
 ```
 
 Add these lines:
-yaml```
+```yaml
 ---
 vault_ipaadmin_password: password
 vault_ipadm_password: password
@@ -436,7 +436,7 @@ ansible-vault create /opt/ansible/inventory/group_vars/ipaclients/vars.yml
 
 vars.yml will contain plaintext variables. It will also reference the passwords stored in the vault by their variable names. 
 
-yaml```
+```yaml
 ---
 ipaadmin_password: {{ vault_ipaadmin_password }}
 ipadm_password: {{ vault_ipadm_password }}
@@ -497,7 +497,7 @@ sudo ipactl status
 ```
 
 Check server registration:
-bash```
+```
 kinit admin
 ipa server-find
 ```
@@ -520,7 +520,7 @@ dig -x xxx.xxx.xxx.xxx
 ```
 
 SRV records lookup:
-bash```
+```
 dig _kerberos._tcp.plab.internal SRV
 dig _ldap._tcp.plab.internal SRV
 ```
@@ -528,7 +528,7 @@ dig _ldap._tcp.plab.internal SRV
 #### 3.6.3 Kerberos
 
 From any IPA-client, try to obtain a Kerberos ticket:
-bash```
+```
 kinit admin
 klist
 ```
@@ -556,7 +556,7 @@ If no certificate errors show up, and the return output is either JSON or 401/un
 
 ### 3.7 IPA users
 
-Currently, each VM has a couple of users: rocky, jonatan and Filip. These are local Linux-users, and they're not bound to freeIPA. jonatan and Filip are human users, and we want FreeIPA counterparts. It wouldn't fit in the FreeIPA paradigm to have both, so the local Linux users will have to be removed. rocky is a special case, since it's the Rocky Linux cloud-init user, and not tied to any human user. System users should preferably not be managed by IPA, so we'll ignore rocky (for now).
+Currently, each VM has a couple of users: rocky, jonatan and Filip. These are local Linux-users, and they're not bound to FreeIPA. jonatan and Filip are human users, and we want FreeIPA counterparts. It wouldn't fit in the FreeIPA paradigm to have both, so the local Linux users will have to be removed. rocky is a special case, since it's the Rocky Linux cloud-init user, and not tied to any human user. System users should preferably not be managed by IPA, so we'll ignore rocky (for now).
 
 #### 3.7.1 Remove local users
 
@@ -657,7 +657,7 @@ Host-based access control (HBAC) determines which users/groups are allowed to us
 Like with users, hosts are best managed on a group basis. We'll make host-groups that reflect the category of VMs we have.
 
 Create host groups:
-bash```
+```
 ipa hostgroup-add ipa
 ipa hostgroup-add mgmt
 ipa hostgroup-add metrics
@@ -665,7 +665,7 @@ ipa hostgroup-add app
 ```
 
 Tie VMs to groups:
-bash```
+```
 ipa hostgroup-add-member ipa --hosts=ipa-01.plab.internal
 ipa hostgroup-add-member mgmt --hosts=mgmt-01.plab.internal
 ipa hostgroup-add-member metrics --hosts=metrics-01.plab.internal
@@ -689,7 +689,7 @@ ipa hbacrule-add-user sysadmin-access --groups=sysadmins
 ```
 
 Add host groups to rule:
-bash```
+```
 ipa hbacrule-add-host sysadmin-access --hostgroups=ipa
 ipa hbacrule-add-host sysadmin-access --hostgroups=mgmt
 ipa hbacrule-add-host sysadmin-access --hostgroups=metrics
@@ -714,13 +714,13 @@ ipa hbacrule-disable allow_all
 Keep in mind that disabling this rule enforces a *deny all* behaviour. Other rules should be in place beforehand. 
 
 Test the rule:
-bash```
+```
 ipa hbactest --host mgmt-01.plab.internal --service sudo --user jonatan
 ipa hbactest --host mgmt-01.plab.internal --service sudo --user filip
 ```
 
 Create a rule for users:
-bash```
+```
 ipa hbacrule-add user-access
 ipa hbacrule-add-user user-access --groups=users
 ipa hbacrule-add-host user-access --hostgroups=metrics
@@ -731,7 +731,7 @@ ipa hbacrule-enable user-access
 ```
 
 Test:
-bash```
+```
 ipa hbactest --host app-01.plab.internal --service sshd --user filip
 ipa hbactest --host mgmt-01.plab.internal --service sshd --user filip
 ```
@@ -750,12 +750,12 @@ Add rule to group:
 ipa sudorule-add-user full-sudo --group sysadmins
 ```
 
-Add the *authenticate* option to the rule, which disable password-checks:
+Add the *!authenticate* option to the rule, which disable password-checks:
 ```
 ipa sudorule-add-option full-sudo --sudooption='!authenticate'
 ```
 
-This is necessary for running ansible plays with -become. 
+This is necessary for running ansible plays with *-become*. 
 
 Verify:
 ```
@@ -777,7 +777,7 @@ sudo chown -R root:sysadmins /opt/ansible
 sudo chmod -R g+rw opt/ansible
 ```
 
-Make sure you're logged in with your *sysadmins*-user and generate a new SSH-key. 
+Make sure you're logged in with your *sysadmins*-user and generate a new SSH-key:
 ```
 cd ~
 ssh-keygen
@@ -815,7 +815,7 @@ This is a nice, not-so drastic method of retiring rocky. Just make sure that *ro
 We'll use Ansible to create a local user on all VMs. This ensures that the user is properly mirrored across systems.
 
 Create a new playbook:
-yaml```
+```yaml
 ---
 - name: Create breakglass user
   hosts: rocky
