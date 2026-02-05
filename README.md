@@ -15,6 +15,19 @@ Kort sammanfattning av dokumentet
 1. [Introduction](#introduction)
 2. [Goals and Objectives](#goals-and-objectives)
 3. [Method](#method)
+   3.1 [Prepare a new VM](#31-prepare-a-new-vm) <br>
+   3.2 [DNS](#32-dns) <br>
+   3.3 [FreeIPA installation](#33-freeipa-installation) <br>
+   3.4 [Chrony/NTP](#34-chrony/ntp) <br>
+   3.5 [Firewall configuration](#35-firewall-configuration) <br>
+   3.6 [Set up FreeIPA-clients with Ansible](#36-set-up-freeipa-clients-with-ansible) <br>
+   3.7 [Verify that FreeIPA works so far](#37-verify-that-freeipa-works-so-far) <br>
+   3.8 [IPA users](#38-ipa-users) <br>
+   3.9 [IPA groups](#39-ipa-groups) <br>
+   3.10 [HBAC](#310-hbac) <br>
+   3.11 [sudo rules](#311-sudo-rules) <br>
+   3.12 [SSH key management](#312-ssh-key-management) <br>
+   3.13 [Break-glass admin](#313-break-glass-admin) <br>
 4. [Target Audience](#target-audience)
 5. [Document Status](#document-status)
 6. [Disclaimer](#disclaimer)
@@ -33,7 +46,7 @@ Mål och syften
 
 ## Method
 ### 3.1 Prepare a new VM
-It is strongly suggested to run the FreeIPA-server on its own VM. Other VMs, like mgmt-01, will depend on IAM functionality. Keeping seperate VMs avoids circular dependency. Misconfiguration in this lab could lead to IPA policy denying your login, effectively locking you out of your own identity system. This solution prevents the risk of such lock-out accidents.
+It is suggested to run the FreeIPA-server on its own VM. Other VMs, like *mgmt-01*, will depend on IAM functionality. Keeping seperate VMs avoids circular dependency, and makes recovery easier. 
 
 #### 3.1.1 Clone rocky-base
 Create a new clone from the *rocky-base* template. Give it the name *ipa-01*, a VM ID and static IPv4- and IPv6-addresses.
@@ -41,7 +54,7 @@ Create a new clone from the *rocky-base* template. Give it the name *ipa-01*, a 
 #### 3.1.2 Add new VM in Ansible
 On the *mgmt-01* VM, add the new *ipa-01*-host to the Ansible *hosts.ini* file. We'll put it under the *[rocky]* category and also create a new *[ipaservers]* category for it. 
 
-Copy over the public SSH-key of the *mgmt* VM to the IPA VM. Confirm that it's working with: 
+Copy over your public SSH-key to the IPA VM. Confirm that it's working with: 
 ```
 ansible ipaservers -m ping
 ```
@@ -212,7 +225,7 @@ Verify time synchronization with:
 timedatectl
 ```
 
-### 3.4 Firewall configuration
+### 3.5 Firewall configuration
 
 FreeIPA uses a couple of different protocols. The following ports must be allowed through the firewall for full functionality:
 - TCP ports: 80, 433 (HTTP/HTTPS), 389, 636 (LDAP/LDAPS), 88, 464 (Kerberos), 53 (DNS)
@@ -223,7 +236,7 @@ We've already made rules for HTTP,HTTPS, DNS and NTP. These rules doesn't need t
 
 Since we are using an internal DNS, and we want to forward traffic to our organisations DNS, we want to replace the ip-address of the *dns* IP Set.
 
-#### 3.4.1 FreeIPA-server firewall rules
+#### 3.5.1 FreeIPA-server firewall rules
 Create a new security-group and call it *freeipa-server*.
 Add the following rules:
 
@@ -279,7 +292,7 @@ Macro: DNS
 Log level: info
 </pre>
 
-#### 3.4.2 FreeIPA-client firewall rules
+#### 3.5.2 FreeIPA-client firewall rules
 Create a new IP set, give it the name *ipa-servers*
 Add the address of the *ipa-01* VM.
 
@@ -345,16 +358,16 @@ Dest. port: 464
 Log level: info
 </pre>
 
-#### 3.4.3 Apply Security groups
+#### 3.5.3 Apply Security groups
 On the VM-level, apply the *freeipa-server* security-group to the *ipa-01* VM. For the rest of the VMs, apply the *freeipa-client* security group.
 
 I also suggest adding a comment to the two new security-groups, stating that they do not include rules for HTTP, HTTPS and NTP. The name of the *dns* IP set can also be changed to *dns-internal*. Update the DNS security group with the new name. These changes help reflect the current state of the project. 
 
-### 3.5 Set up FreeIPA-clients with Ansible
+### 3.6 Set up FreeIPA-clients with Ansible
 
 When installing the IPA-clients, it is a good idea to use Ansible. This ensures correct state on all hosts and prevents configuration-drift. 
 
-#### 3.5.1 Install ansible-freeipa
+#### 3.6.1 Install ansible-freeipa
 
 On the *mgmt* VM, run:
 ```
@@ -390,7 +403,7 @@ roles_path = /opt/ansible/roles
 ```
 
 
-#### 3.5.2 Prepare hosts.ini
+#### 3.6.2 Prepare hosts.ini
 
 On the *mgmt* VM, edit the Ansible */inventory/hosts.ini* and add:
 
@@ -404,7 +417,7 @@ app-01
 mgmt-01
 ```
 
-#### 3.5.3 Ansible Vault
+#### 3.6.3 Ansible Vault
 
 FreeIPA-clients need the admin password and directory manager password from the server to be configured. We want to keep these secret when working with Ansible, and not store them in plaintext. Ansible vault encrypts data at rest, and allows playbooks to safely access these. 
 
@@ -420,7 +433,7 @@ vault_ipaadmin_password: password
 vault_ipadm_password: password
 ```
 
-#### 3.5.4 vars
+#### 3.6.4 vars
 
 The */group_vars* and */host_vars* folders placed in inventory is meant for *vars.yml*-files associated to groups and hosts. Here, we can define attributes that apply only to the groups and hosts we want. 
 
@@ -450,14 +463,14 @@ ipaclient_mkhomedir: yes
 These variables are from the FreeIPA-collection and their descriptions are found in the 
  <a href=https://github.com/freeipa/ansible-freeipa/blob/master/roles/ipaclient/README.md#variables>documentation.</a> 
 
-#### 3.5.5  Install FreeIPA clients
+#### 3.6.5  Install FreeIPA clients
 
 Run the playbook:
 ```
 ansible-playbook /opt/ansible/playbooks/install_ipa_client.yml
 ```
 
-#### 3.5.6 Create a vault-password file
+#### 3.6.6 Create a vault-password file
 
 The vault password can be stored in a password file. That will skip the ansible-vault password prompt when running playbooks. 
 
@@ -483,11 +496,11 @@ It's also a good idea to clear the command history afterwards:
 history -c
 ```
 
-### 3.6 Verify that FreeIPA works so far
+### 3.7 Verify that FreeIPA works so far
 
 FreeIPA consists of many different components, and confirming that they all seem healthy can save you a lot of headache later.
 
-#### 3.6.1 IPA Server
+#### 3.7.1 IPA Server
 
 Log into the *ipa-01* VM.
 
@@ -507,7 +520,7 @@ Verify host enrolment:
 ipa host-find
 ```
 
-#### 3.6.2 DNS
+#### 3.7.2 DNS
 
 Forward lookup:
 ```
@@ -525,7 +538,7 @@ dig _kerberos._tcp.plab.internal SRV
 dig _ldap._tcp.plab.internal SRV
 ```
 
-#### 3.6.3 Kerberos
+#### 3.7.3 Kerberos
 
 From any IPA-client, try to obtain a Kerberos ticket:
 ```
@@ -533,7 +546,7 @@ kinit admin
 klist
 ```
 
-#### 3.6.4 SSSD
+#### 3.7.4 SSSD
 
 From any IPA-client, check if SSSD is running:
 ```
@@ -545,7 +558,7 @@ check if the admin IPA-user is visible:
 getent passwd admin
 ```
 
-#### 3.6.5 TLS
+#### 3.7.5 TLS
 
 From client to server, using curl:
 ```
@@ -554,11 +567,11 @@ curl https://ipa-01.lab.internal/ipa/json
 
 If no certificate errors show up, and the return output is either JSON or 401/unauthorized, then CA trust is established. 
 
-### 3.7 IPA users
+### 3.8 IPA users
 
 Currently, each VM has a couple of users: rocky, jonatan and Filip. These are local Linux-users, and they're not bound to FreeIPA. jonatan and Filip are human users, and we want FreeIPA counterparts. It wouldn't fit in the FreeIPA paradigm to have both, so the local Linux users will have to be removed. rocky is a special case, since it's the Rocky Linux cloud-init user, and not tied to any human user. System users should preferably not be managed by IPA, so we'll ignore rocky (for now).
 
-#### 3.7.1 Remove local users
+#### 3.8.1 Remove local users
 
 In case you have important files owned by these users, either consider migrating the user settings to FreeIPA (UID/GID), or using *chown* later. 
 
@@ -566,7 +579,7 @@ Delete corresponding Linux-users on all VMs (*remove=yes* deletes user directori
 ```
 ansible all -b -m user -a "name=jonatan state=absent remove=yes"
 ```
-#### 3.7.2 Add IPA users
+#### 3.8.2 Add IPA users
 
 When working with FreeIPA, you can either use its Web UI, or the CLI. The *ipa* command will offer the same functionality as the Web UI. We'll be using the CLI. 
 
@@ -612,7 +625,7 @@ When logging in for the first time, that users home directory should be automati
 Create at least one more user, it will be useful for testing later. 
 
 
-### 3.8 IPA groups
+### 3.9 IPA groups
 
 We'll create two groups for this lab, one for admins and one for regular users. Note that the group *admins* already exists by default (this is where the *admin* user is). We'll leave this group alone, and call our other admin-group something like *sysadmins*. 
 
@@ -646,13 +659,13 @@ Add the second user to the user group:
 ipa group-add-member users --users=Filip
 ```
 
-### 3.9 HBAC
+### 3.10 HBAC
 
 Host-based access control (HBAC) determines which users/groups are allowed to use which hosts/services. We will use the following arrangement:
 - Sysadmins have full access to all VMs.
 - Users have limited access to metrics and app.
 
-#### 3.9.1 host groups
+#### 3.10.1 host groups
 
 Like with users, hosts are best managed on a group basis. We'll make host-groups that reflect the category of VMs we have.
 
@@ -672,7 +685,7 @@ ipa hostgroup-add-member metrics --hosts=metrics-01.plab.internal
 ipa hostgroup-add-member app --hosts=app-01.plab.pinternal
 ```
 
-#### 3.9.2 HBAC rules
+#### 3.10.2 HBAC rules
 
 HBAC-rules state which users have access to what hosts, and which services on those hosts. For this lab, things will be kept simple. A regular user will have access to only SSH and login services. Sysadmins will have access to everything. 
 
@@ -736,7 +749,7 @@ ipa hbactest --host app-01.plab.internal --service sshd --user filip
 ipa hbactest --host mgmt-01.plab.internal --service sshd --user filip
 ```
 
-### 3.10 sudo rules
+### 3.11 sudo rules
 
 Sudo rules can be used to define which users have access to which commands, and more. Again, we'll keep it simple and grant sysadmins complete sudo access. 
 
@@ -767,7 +780,7 @@ User jonatan may run the following commands on ipa-01:
     (ALL : ALL) NOPASSWD: ALL
 </pre>
 
-### 3.11 SSH
+### 3.12 SSH key management
 
 At this point, Ansible won't work with our new IPA-users. This is because we haven't generated and shared SSH-keys for these users yet. We could do this like we've done in previous labs, but an alternative solution is using FreeIPA to store and manage our public keys for us. This is not only more convenient, it further consolidates our centralized identity management solution. 
 
@@ -798,20 +811,22 @@ Verify that Ansible can reach remote hosts:
 ansible all -m ping
 ```
 
-### 3.12 Break-glass admin
+### 3.13 Break-glass admin
 
 It's a good idea to have a local user account with root access on standby. A *break glass* user, which exists in case of emergencies where FreeIPA breaks or otherwise becomes unavailable. 
 
 We've removed local users, with the exception of *rocky*, our Rocky Linux cloud-init user account. rocky is not suitable for the role of a *break glass* user, for many reasons. In fact, rocky does not fit into our design at all.
+
+#### 3.13.1 Retire rocky
 
 password-lock rocky:
 ```
 ansible all -b -m user -a "name=rocky password_lock=true"
 ```
 
-This is a nice, not-so drastic method of retiring rocky. Just make sure that *rocky* does not have SSH access to any of the hosts using public key authentication. 
+This is a nice, not-so drastic method of retiring rocky. Just be sure that *rocky* does not have SSH access to any of the hosts using public key authentication. 
 
-#### 3.12.1 Create break-glass user
+#### 3.13.2 Create break-glass user
 We'll use Ansible to create a local user on all VMs. This ensures that the user is properly mirrored across systems.
 
 Create a new playbook:
