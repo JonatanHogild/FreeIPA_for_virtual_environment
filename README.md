@@ -39,9 +39,12 @@ It is strongly suggested to run the freeIPA-server on its own VM. Other VMs, lik
 Create a new clone from the *rocky-base* template. Give it the name *ipa-01*, a VM ID and static IPv4- and IPv6-addresses.
 
 #### 3.1.2 Add new VM in Ansible
-On the *mgmt-01* VM, add the new IPA host to the Ansible *hosts.ini* file. We'll put it under the *[rocky]* category and also create a new *[ipa]* category for it. 
+On the *mgmt-01* VM, add the new IPA host to the Ansible *hosts.ini* file. We'll put it under the *[rocky]* category and also create a new *[ipa-server]* category for it. 
 
-Copy over the public SSH-key of the *mgmt* VM to the IPA VM. Confirm that it's working with: `ansible ipa -m ping`
+Copy over the public SSH-key of the *mgmt* VM to the IPA VM. Confirm that it's working with: 
+```
+ansible ipa -m ping
+```
 
 #### 3.1.3 Install packages
 
@@ -56,11 +59,15 @@ FreeIPA needs DNS to work correctly, which includes; forward and reverse DNS res
 
 FreeIPA can be configured to use its own integrated DNS, which we will use for this lab. We'll still need to access our organisations DNS server, and the freeIPA DNS will forward traffic to it.
 
-choose a name for the private lab domain, like *.plab.internal*. The VMs will now belong to this domain, and have names like *ipa-01.plab.internal*, *mgmt-01.plab.internal*, and so on.
+#### 3.2.1 Decide on a domain
 
-Go to the Proxmox web GUI, and make the following changes on every VM:
-Cloud-Init > DNS domain: *plab.internal*
-Cloud-Init > DNS servers: *ip-address of ipa-01*
+choose a name for the private lab domain, like *.plab.internal*. The VMs will now belong to this domain, and have names like *ipa-01.plab.internal*, *mgmt-01.plab.internal*, and so on. <br>
+
+Go to the Proxmox web GUI, and make the following changes on every VM: <br>
+Cloud-Init > DNS domain: *plab.internal* <br>
+Cloud-Init > DNS servers: *ip-address of ipa-01* <br>
+
+#### 3.2.2 Update /etc/hosts, hostnames and /etc/resolv.conf on VMs
 
 Go into the shell of each VM, edit the /etc/hosts-file to reflect this new naming convention. For example, on *metrics-01*:
 ```
@@ -75,7 +82,7 @@ Go into the shell of each VM, edit the /etc/hosts-file to reflect this new namin
 ::1 localhost6.localdomain6 localhost6
 ```
 
-Change the hostname directly with:
+Change the hostname:
 ```
 hostnamectl set-hostname metrics-01.plab.internal
 ```
@@ -98,6 +105,8 @@ nameserver 127.0.0.1
 nameserver ::1
 ```
 
+Note that changing hostnames will have some initial consequences for the environment. SSH will warn about not recognizing the hostname of hosts, this can be fixed with `ssh-keygen -R user@host`. 
+
 ### 3.3 FreeIPA installation
 
 #### 3.3.1. Install ipa-server
@@ -112,7 +121,7 @@ This will take you through a configuration process. Say 'yes' to internal DNS. Y
 The installation should take a minute or two. Be observent here, as it will warn you if it runs into any issues. For us, it gave the following warning:
 *"Warning: IPA was unable to sync time with chrony!"*
 
-The installation was still successful. This just means we ought to fix time-sync to ensure proper Kerberos functionality.
+The installation was still successful. This just means we should fix time-sync to ensure proper Kerberos functionality.
 
 ### 3.3.2 Configure DNS
 
@@ -138,7 +147,7 @@ Restart internet domain name server:
 sudo systemctl restart named
 ```
 
-If you run into DNS issues, a potential fix is turning off dnssec validation, which doesn't need to be enabled for an internal environment like this. First, open up *ipa-options-ext.conf*:
+If you run into DNS issues, a potential fix is turning off dnssec validation, which doesn't need to be enabled for an internal environment like this. Open up *ipa-options-ext.conf*:
 ```
 sudo vi /etc/named/ipa-options-ext.conf
 ```
@@ -149,12 +158,10 @@ Set dnssec-validation to no:
 dnssec-validation no;
 ```
 
-Restart dns:
+Restart DNS:
 ```
 sudo systemctl restart named
 ```
-
-There may be many causes to DNS problems, and this won't fix them all.
 
 ### 3.4 Chrony/NTP
 
@@ -183,7 +190,7 @@ We haven't yet added NTP on our VMs. To do this, we'll use Ansible. Go into the 
         regexp: '^pool 2\.rocky\.pool\.ntp\.org iburst'
         line: 'server xxx.xxx.xxx.xxx iburst'
         state: present
-      when: ansible_distribution == "Rocky"  
+      when: ansible_distribution == "Rocky"
 
     - name: Restart chrony
       ansible.builtin.service:
@@ -207,14 +214,14 @@ timedatectl
 
 ### 3.4 Firewall configuration
 
-freeIPA uses a couple of different protocols. The following ports must be allowed through the firewall for full functionality:
+FreeIPA uses a couple of different protocols. The following ports must be allowed through the firewall for full functionality:
 - TCP ports: 80, 433 (HTTP/HTTPS), 389, 636 (LDAP/LDAPS), 88, 464 (Kerberos), 53 (DNS)
 - UDP Ports: 88, 464 (Kerberos), 123 (NTP)
 
 We'll configure the firewall on the Proxmox server to work with these protocols.
-We've already made rules for HTTP,HTTPS, DNS and NTP. These rules doesn't need to be adjusted. 
+We've already made rules for HTTP,HTTPS, DNS and NTP. These rules doesn't need to be adjusted. Though the server will need some additional DNS rules. 
 
-Since we are using an internal DNS, and we want to forward traffic to our organisatoins DNS, we want to replace the ip-address of the *dns* IP Set. 
+Since we are using an internal DNS, and we want to forward traffic to our organisations DNS, we want to replace the ip-address of the *dns* IP Set.
 
 #### 3.4.1 FreeIPA-server firewall rules
 Create a new security-group and call it *freeipa-server*.
@@ -341,11 +348,14 @@ Log level: info
 #### 3.4.3 Apply Security groups
 On the VM-level, apply the *freeipa-server* security-group to the *ipa-01* VM. For the rest of the VMs, apply the *freeipa-client* security group.
 
-I also suggest adding a comment to each security-group, stating that they do not include rules for HTTP, HTTPS and NTP. 
+I also suggest adding a comment to the two new security-groups, stating that they do not include rules for HTTP, HTTPS and NTP. The name of the *dns* IP set can also be changed to *dns-internal*. Update the DNS security group with the new name. These changes help reflect the current state of the project. 
 
 ### 3.5 Set up FreeIPA-clients with Ansible
 
+When installing the IPA-clients, it is a good idea to use Ansible. This ensures correct state on all hosts and prevents configuration-drift. 
+
 #### 3.5.1 Install ansible-freeipa
+
 On the *mgmt* VM, run:
 ```
 sudo dnf install ansible-freeipa
@@ -353,22 +363,20 @@ sudo dnf install ansible-freeipa
 
 <a href=https://github.com/freeipa/ansible-freeipa>ansible-freeipa</a> is a collection for Ansible, containing roles, playbooks and modules to perform FreeIPA-related tasks. With this, we'll install and configure the FreeIPA-client on our hosts.
 
-This package will install to */usr/share/ansible/collections/ansible_collections/freeipa/ansible_freeipa/*. For convenience's sake, we'll copy over the files we'll use to */opt/ansible*.
+This package will install to */usr/share/ansible/collections/ansible_collections/freeipa/ansible_freeipa/*. For convenience's sake, we'll make a symbolic link in */opt/ansible*.
 
-Copy playbook:
+Link to playbook:
 ```
-cp /usr/share/ansible/collections/ansible_collections/freeipa/ansible_freeipa/playbooks/install-client.yml /opt/ansible/playbooks/install_ipa_client.yml
+ln -s /usr/share/ansible/collections/ansible_collections/freeipa/ansible_freeipa/playbooks/install-client.yml /opt/ansible/playbooks/install_ipa_client.yml
 ```
 
-We're only copying over <a href=https://github.com/freeipa/ansible-freeipa/blob/master/playbooks/install-client.yml>this playbook</a>. For now, it's all we'll need. 
+We only need <a href=https://github.com/freeipa/ansible-freeipa/blob/master/playbooks/install-client.yml>this playbook</a>.
 
 The tasks for this installation process are found under <a href=https://github.com/freeipa/ansible-freeipa/blob/master/roles/ipaclient/tasks/install.yml>roles/ipaclient/install.yml</a>.
 
-We also need the ipaclient roles directory to be accessible. Either copy it to the */opt/ansible/roles* folder, or change its path:
-
-Copy roles:
+If we like to keep the relevant ansible-files in one and the same folder, that is /opt/ansible, we can specifically set the paths in the ansible.cfg file. Beside the playbook, we'll make a link for the /roles/ipaclient directory:
 ```
-cp /usr/share/ansible/collections/ansible_collections/freeipa/ansible_freeipa/roles/ipaclient/ /opt/ansible/roles/ipaclient/
+ln -s /usr/share/ansible/collections/ansible_collections/freeipa/ansible_freeipa/roles/ipaclient/ /opt/ansible/roles/ipaclient/
 ```
 
 check current roles path:
@@ -378,7 +386,6 @@ ansible-config dump | grep -i roles_path
 
 To change roles path, open *ansible.cfg* and add:
 ```
-[defaults]
 roles_path = /opt/ansible/roles
 ```
 
@@ -387,7 +394,7 @@ roles_path = /opt/ansible/roles
 
 On the *mgmt* VM, edit the Ansible */inventory/hosts.ini* and add two new categories:
 
-```
+ini```
 [ipaservers]
 ipa-01
 
@@ -396,6 +403,7 @@ metrics-01
 app-01
 localhost
 ```
+
 #### 3.5.3 Ansible Vault
 
 FreeIPA-clients need the admin password and directory manager password from the server to be configured. We want to keep these secret when working with Ansible, and not store them in plaintext. Ansible vault encrypts data at rest, and allows playbooks to safely access these. 
@@ -406,13 +414,14 @@ ansible-vault create /opt/ansible/inventory/group_vars/ipaclients/vault.yml
 ```
 
 Add these lines:
-```
+yaml```
 ---
 vault_ipaadmin_password: password
 vault_ipadm_password: password
 ```
 
 #### 3.5.4 vars
+
 The */group_vars* and */host_vars* folders placed in inventory is meant for *vars.yml*-files associated to groups and hosts. Here, we can define attributes that apply only to the groups and hosts we want. 
 
 Create a new folder in /group_vars for ipaclients:
@@ -427,7 +436,7 @@ ansible-vault create /opt/ansible/inventory/group_vars/ipaclients/vars.yml
 
 vars.yml will contain plaintext variables. It will also reference the passwords stored in the vault by their variable names. 
 
-```
+yaml```
 ---
 ipaadmin_password: {{ vault_ipaadmin_password }}
 ipadm_password: {{ vault_ipadm_password }}
@@ -442,7 +451,6 @@ These variables are from the FreeIPA-collection and their descriptions are found
  <a href=https://github.com/freeipa/ansible-freeipa/blob/master/roles/ipaclient/README.md#variables>documentation.</a> 
 
 #### 3.5.5  Install FreeIPA clients
-
 
 Run the playbook:
 ```
@@ -460,7 +468,7 @@ echo 'password' > ./opt/ansible/.vault_pass
 
 Set permissions for file:
 ```
-chmod 640 .vault_pass
+chmod 660 .vault_pass
 ```
 
 In *ansible.cfg*, add the following line:
@@ -475,9 +483,9 @@ It's also a good idea to clear the command history afterwards:
 history -c
 ```
 
-### 3.6 Verify that everything works
+### 3.6 Verify that FreeIPA works so far
 
-At this point, it would be a good idea to verify that everything works. FreeIPA consists of many different components, and confirming that they all seem healthy can save you a lot of headache later.
+FreeIPA consists of many different components, and confirming that they all seem healthy can save you a lot of headache later.
 
 #### 3.6.1 IPA Server
 
@@ -489,7 +497,7 @@ sudo ipactl status
 ```
 
 Check server registration:
-```
+bash```
 kinit admin
 ipa server-find
 ```
@@ -512,7 +520,7 @@ dig -x xxx.xxx.xxx.xxx
 ```
 
 SRV records lookup:
-```
+bash```
 dig _kerberos._tcp.plab.internal SRV
 dig _ldap._tcp.plab.internal SRV
 ```
@@ -520,7 +528,7 @@ dig _ldap._tcp.plab.internal SRV
 #### 3.6.3 Kerberos
 
 From any IPA-client, try to obtain a Kerberos ticket:
-```
+bash```
 kinit admin
 klist
 ```
@@ -546,23 +554,19 @@ curl https://ipa-01.lab.internal/ipa/json
 
 If no certificate errors show up, and the return output is either JSON or 401/unauthorized, then CA trust is established. 
 
-### 3.7 IPA Users
+### 3.7 IPA users
 
-Currently, each VM has a couple of users: rocky, jonatan and Filip. These are local Linux-users, and they're not bound to freeIPA. jonatan and Filip are human users, and we want FreeIPA counterparts. It wouldn't fit in the FreeIPA paradigm to have both, so the local Linux users will have to be removed. rocky is a special case, since it's the Rocky Linux cloud-init user, and not tied to any human user. System users should preferably not be managed by IPA, so we'll ignore rocky.
+Currently, each VM has a couple of users: rocky, jonatan and Filip. These are local Linux-users, and they're not bound to freeIPA. jonatan and Filip are human users, and we want FreeIPA counterparts. It wouldn't fit in the FreeIPA paradigm to have both, so the local Linux users will have to be removed. rocky is a special case, since it's the Rocky Linux cloud-init user, and not tied to any human user. System users should preferably not be managed by IPA, so we'll ignore rocky (for now).
 
-<!--A solution to this is to remove these Linux-users, and add IPA-users with the same name, UID and GID. This way, the IPA-users inherit the orphaned files and folders.
+#### 3.7.1 Remove local users
 
-Before proceeding, check the UID and GID of the users. These need to match across VMs. Go on the *mgmt-01* VM and run this ad-hoc command:
-```
-ansible all -m command -a "getent passwd jonatan"
-```
+In case you have important files owned by these users, either consider migrating the user settings to FreeIPA (UID/GID), or using *chown* later. 
 
-Since the VMs are replicated, the user will most likely share the same UID/GID across systems. -->
-
-Delete corresponding Linux-users on all VMs:
+Delete corresponding Linux-users on all VMs (*remove=yes* deletes user directories):
 ```
 ansible all -b -m user -a "name=jonatan state=absent remove=yes"
 ```
+#### 3.7.2 Add IPA users
 
 When working with FreeIPA, you can either use its Web UI, or the CLI. The *ipa* command will offer the same functionality as the Web UI. We'll be using the CLI. 
 
@@ -579,7 +583,6 @@ ipa user-add jonatan --homedir=/home/jonatan --shell=/bin/bash --password
 
 Make sure to give the user a password, since this will function as the user's initial authentication. 
 
-
 Verify that FreeIPA can see the user:
 ```
 getent passwd jonatan
@@ -587,7 +590,7 @@ getent passwd jonatan
 
 Initialize the user:
 ```
-kinit jonatan
+kinit jonatan 
 ```
 
 Attempting this, FreeIPA will likely tell you that your password have expired and prompt you to enter a new password. You can pick the same password again! 
@@ -609,7 +612,7 @@ When logging in for the first time, that users home directory should be automati
 Create at least one more user, it will be useful for testing later. 
 
 
-### 3.8 IPA Groups
+### 3.8 IPA groups
 
 We'll create two groups for this lab, one for admins and one for regular users. Note that the group *admins* already exists by default (this is where the *admin* user is). We'll leave this group alone, and call our other admin-group something like *sysadmins*. 
 
@@ -654,7 +657,7 @@ Host-based access control (HBAC) determines which users/groups are allowed to us
 Like with users, hosts are best managed on a group basis. We'll make host-groups that reflect the category of VMs we have.
 
 Create host groups:
-```
+bash```
 ipa hostgroup-add ipa
 ipa hostgroup-add mgmt
 ipa hostgroup-add metrics
@@ -662,7 +665,7 @@ ipa hostgroup-add app
 ```
 
 Tie VMs to groups:
-```
+bash```
 ipa hostgroup-add-member ipa --hosts=ipa-01.plab.internal
 ipa hostgroup-add-member mgmt --hosts=mgmt-01.plab.internal
 ipa hostgroup-add-member metrics --hosts=metrics-01.plab.internal
@@ -686,7 +689,7 @@ ipa hbacrule-add-user sysadmin-access --groups=sysadmins
 ```
 
 Add host groups to rule:
-```
+bash```
 ipa hbacrule-add-host sysadmin-access --hostgroups=ipa
 ipa hbacrule-add-host sysadmin-access --hostgroups=mgmt
 ipa hbacrule-add-host sysadmin-access --hostgroups=metrics
@@ -711,13 +714,13 @@ ipa hbacrule-disable allow_all
 Keep in mind that disabling this rule enforces a *deny all* behaviour. Other rules should be in place beforehand. 
 
 Test the rule:
-```
+bash```
 ipa hbactest --host mgmt-01.plab.internal --service sudo --user jonatan
 ipa hbactest --host mgmt-01.plab.internal --service sudo --user filip
 ```
 
 Create a rule for users:
-```
+bash```
 ipa hbacrule-add user-access
 ipa hbacrule-add-user user-access --groups=users
 ipa hbacrule-add-host user-access --hostgroups=metrics
@@ -728,7 +731,7 @@ ipa hbacrule-enable user-access
 ```
 
 Test:
-```
+bash```
 ipa hbactest --host app-01.plab.internal --service sshd --user filip
 ipa hbactest --host mgmt-01.plab.internal --service sshd --user filip
 ```
@@ -774,7 +777,7 @@ sudo chown -R root:sysadmins /opt/ansible
 sudo chmod -R g+rw opt/ansible
 ```
 
-Make sure you're logged in with your *sysadmins* user and generate a new SSH-key. 
+Make sure you're logged in with your *sysadmins*-user and generate a new SSH-key. 
 ```
 cd ~
 ssh-keygen
@@ -812,7 +815,7 @@ This is a nice, not-so drastic method of retiring rocky. Just make sure that *ro
 We'll use Ansible to create a local user on all VMs. This ensures that the user is properly mirrored across systems.
 
 Create a new playbook:
-```
+yaml```
 ---
 - name: Create breakglass user
   hosts: rocky
