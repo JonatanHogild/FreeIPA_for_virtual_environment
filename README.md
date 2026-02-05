@@ -18,7 +18,7 @@ Kort sammanfattning av dokumentet
    3.1 [Prepare a new VM](#31-prepare-a-new-vm) <br>
    3.2 [DNS](#32-dns) <br>
    3.3 [FreeIPA installation](#33-freeipa-installation) <br>
-   3.4 [Chrony/NTP](#34-chrony/ntp) <br>
+   3.4 [Chrony/NTP](#34-chronyntp) <br>
    3.5 [Firewall configuration](#35-firewall-configuration) <br>
    3.6 [Set up FreeIPA-clients with Ansible](#36-set-up-freeipa-clients-with-ansible) <br>
    3.7 [Verify that FreeIPA works so far](#37-verify-that-freeipa-works-so-far) <br>
