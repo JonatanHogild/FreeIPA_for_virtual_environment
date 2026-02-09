@@ -1,14 +1,12 @@
-# Title Page
-<img width="100" alt="MyLogo" src="https://github.com/rafaelurrutiasilva/images/blob/main/logos/MyLogo_2.png" align=left><br>
-<br>
-Titel på dokumentet<br>
-Författare<br>
-Publiceringsdatum<br>
+# FreeIPA for a virtual environment
+<img width="200" alt="MyLogo" src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/image.png" align=left>
+Jonatan Högild och Filip Andersson<br>
+24-02-2026<br>
 
-<br>
+<br><br><br><br>
 
 ## Abstract
-Installation of FreeIPA in a virtual environment and configuration of a centralized identity and access management system using FreeIPA. 
+Implementation of the identity and authentication management solution FreeIPA for a virtual production-environment.
 
 ## Table of Contents
 
@@ -28,6 +26,7 @@ Installation of FreeIPA in a virtual environment and configuration of a centrali
    3.11 [sudo rules](#311-sudo-rules) <br>
    3.12 [SSH key management](#312-ssh-key-management) <br>
    3.13 [Break-glass admin](#313-break-glass-admin) <br>
+   3.14 [Subordinate UID/GID](#314-subordinate-uidgid) <br>
 4. [Target Audience](#target-audience)
 5. [Document Status](#document-status)
 6. [Disclaimer](#disclaimer)
@@ -38,10 +37,18 @@ Installation of FreeIPA in a virtual environment and configuration of a centrali
 11. [Conclusion](#conclusion)
 
 ## Introduction
-In this lab, we'll dive into [FreeIPA](https://www.freeipa.org/), an IAM-solution for Linux. It is no small task to manage hundreds, or even thousands of users, hosts, and user-resources. With this implementation of FreeIPA, we set out to manage identities in our small virtual environment as if it were a large enterprise environment. A lot will be covered in this lab: DNS, installation of FreeIPA-servers and clients, IPA users and groups, host-based access control, sudo rules, and much more! 
+In this lab, we'll dive into [FreeIPA](https://www.freeipa.org/), an IAM-solution for Linux. It is no small task to manage hundreds, or even thousands of users across an enterprise. Identity and Access Management (IAM) is a framework of policies and technologies brought together to handle this issue. With this implementation of FreeIPA, we set out to manage identities and authentication in our small virtual environment as if it were a large enterprise environment. A lot will be covered in this lab: DNS, installation of FreeIPA-servers and clients, IPA users and groups, host-based access control, sudo rules, and much more! 
+
+This is the fifth project <a href="https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc/blob/main/Extra/Mermaid/Projects.md">in a series of projects</a>, with the goal of setting up a complete virtualized, automated, and monitored IT-Enviroment as a part of our internship at [The Swedish Meteorological and Hydrological Institute (SMHI)](https://www.smhi.se/en/about-smhi). <br>
+
+Previous projects: <br>
+1. [Proxmox installation and configuration](https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc)
+2. [Rocky Linux golden image for cloning](https://github.com/Filipanderssondev/Rocky_Linux_OS_Base_for_VMs)
+3. [Ansible on management VM](https://github.com/JonatanHogild/Ansible_on_management_vm)
+4. [Container stack deployment with Ansible](https://github.com/Filipanderssondev/Container_Stack_Deployment_With_Ansible/) <br>
 
 ## Goals and Objectives
-The goal of this project is to set up FreeIPA in a safe and scalable way 
+The goal of this project is to build a modern identity management solution that is robust, secure and scalable. Users and groups should be handled centrally, instead of existing as separate local entities on each host. Policies and rules dictate access and authentication. This should not come at a cost for the end-user, who should still be able to use their machines without significant hindrance. 
 
 ## Method
 ### 3.1 Prepare a new VM
@@ -69,11 +76,11 @@ sudo dnf install ipa-server ipa-server-dns
 
 FreeIPA needs DNS to work correctly, which includes; forward and reverse DNS resolution, stable FQDNs, correct SRV records and time sync resolvable by name. 
 
-FreeIPA can be configured to use its own integrated DNS, which we will use for this lab. We'll still need to access our organisations DNS server, and the FreeIPA DNS will forward traffic to it.
+#### 3.2.1 Decide on a domain structure
 
-#### 3.2.1 Decide on a domain
+We will not use our organisations domain (smhi.se) for this lab, since we don't want service-record collisions, or other nasty side-effects. An alternative to this is using a subdomain, such as lab.smhi.se. A second alternative is using an internal domain, which we will use instead. FreeIPA can be installed with its own integrated DNS, which we will use as our internal DNS server for the lab environment. We'll still need to access our organisations DNS server, and the FreeIPA DNS can be configured to forward traffic to it.
 
-choose a name for the private lab domain, like *.plab.internal*. The VMs will now belong to this domain, and have names like *ipa-01.plab.internal*, *mgmt-01.plab.internal*, and so on. <br>
+Choose a name for the private lab domain, like *.plab.internal*. The VMs will now belong to this domain, and have names like *ipa-01.plab.internal*, *mgmt-01.plab.internal*, and so on. 
 
 Go to the Proxmox web GUI, and make the following changes on every VM: <br>
 Cloud-Init > DNS domain: *plab.internal* <br>
@@ -149,7 +156,7 @@ Add forwarder:
 ipa dnsconfig-mod --forwarder=xxx.xxx.xxx.xxx
 ```
 
-set forward policy to *only*:
+Set forward policy to *only*:
 ```
 ipa dnsconfig-mod --forward-policy=only
 ```
@@ -364,7 +371,7 @@ I also suggest adding a comment to the two new security-groups, stating that the
 
 ### 3.6 Set up FreeIPA-clients with Ansible
 
-When installing the IPA-clients, it is a good idea to use Ansible. This ensures correct state on all hosts and prevents configuration-drift. 
+When installing the IPA-clients, it is a good idea to use Ansible. This ensures correct state on all hosts and prevents configuration-drift. Ansible can also install FreeIPA-servers, which is recommended when setting up multiple servers.
 
 #### 3.6.1 Install ansible-freeipa
 
@@ -404,7 +411,7 @@ roles_path = /opt/ansible/roles
 
 #### 3.6.2 Prepare hosts.ini
 
-On the *mgmt* VM, edit the Ansible */inventory/hosts.ini* and add:
+On the *mgmt* VM, open */inventory/hosts.ini* and add:
 
 ```ini
 [ipaservers]
@@ -523,7 +530,7 @@ ipa host-find
 
 Forward lookup:
 ```
-dig ipa-01.company.com
+dig ipa-01.plab.internal
 ```
 
 Reverse lookup:
@@ -552,7 +559,7 @@ From any IPA-client, check if SSSD is running:
 systemctl status sssd
 ```
 
-check if the admin IPA-user is visible:
+check that the admin IPA-user is visible:
 ```
 getent passwd admin
 ```
@@ -589,7 +596,6 @@ kinit admin
 
 Add user:
 ```
-ipa user-add jonatan --uid=1001 --gidnumber=1001 --homedir=/home/jonatan --shell=/bin/bash --password
 ipa user-add jonatan --homedir=/home/jonatan --shell=/bin/bash --password
 ```
 
@@ -660,7 +666,8 @@ ipa group-add-member users --users=Filip
 
 ### 3.10 HBAC
 
-Host-based access control (HBAC) determines which users/groups are allowed to use which hosts/services. We will use the following arrangement:
+Host-based access control (HBAC) determines which users/groups are allowed to use which hosts/services.
+We will use the following arrangement:
 - Sysadmins have full access to all VMs.
 - Users have limited access to metrics and app.
 
@@ -685,8 +692,6 @@ ipa hostgroup-add-member app --hosts=app-01.plab.pinternal
 ```
 
 #### 3.10.2 HBAC rules
-
-HBAC-rules state which users have access to what hosts, and which services on those hosts. For this lab, things will be kept simple. A regular user will have access to only SSH and login services. Sysadmins will have access to everything. 
 
 Create a new rule:
 ```
@@ -767,17 +772,12 @@ Add the *!authenticate* option to the rule, which disable password-checks:
 ipa sudorule-add-option full-sudo --sudooption='!authenticate'
 ```
 
-This is necessary for running ansible plays with *-become*. 
+This option is necessary for running ansible plays with remote root privileges. 
 
 Verify:
 ```
 sudo -l
 ```
-
-<pre>
-User jonatan may run the following commands on ipa-01:
-    (ALL : ALL) NOPASSWD: ALL
-</pre>
 
 ### 3.12 SSH key management
 
@@ -812,9 +812,9 @@ ansible all -m ping
 
 ### 3.13 Break-glass admin
 
-It's a good idea to have a local user account with root access on standby. A *break glass* user, which exists in case of emergencies where FreeIPA breaks or otherwise becomes unavailable. 
+It's a good idea to have a local user account with root access on standby. A *break-glass* user, which exists in case of emergencies where FreeIPA becomes unavailable. 
 
-We've removed local users, with the exception of *rocky*, our Rocky Linux cloud-init user account. rocky is not suitable for the role of a *break glass* user, for many reasons. In fact, rocky does not fit into our design at all.
+We've removed local users, with the exception of *rocky*, our Rocky Linux cloud-init user account. rocky is not suitable for the role of a *break-glass* user, for many reasons. In fact, rocky does not fit into our design at all. 
 
 #### 3.13.1 Retire rocky
 
@@ -822,8 +822,6 @@ password-lock rocky:
 ```
 ansible all -b -m user -a "name=rocky password_lock=true"
 ```
-
-This is a nice, not-so drastic method of retiring rocky. Just be sure that *rocky* does not have SSH access to any of the hosts using public key authentication. 
 
 #### 3.13.2 Create break-glass user
 We'll use Ansible to create a local user on all VMs. This ensures that the user is properly mirrored across systems.
@@ -892,6 +890,16 @@ su breakglass
 sudo id
 ```
 
+### 3.14 Subordinate UID/GID
+
+Subordinate user and group IDs (subuid/subguid) are a way to assign users the root ID When running rootless containers with Podman. Local users are automatically given a subordinate ID range, while IPA-users are not. User namespaces should not be handled by FreeIPA.
+
+Add users to /etc/subuid and /etc/subgid for the VMs running podman and buildah:
+```
+ansible app -b -m ansible.builtin.lineinfile -a 'path=/etc/subuid line="jonatan:2222:65536" create=yes'
+ansible app -b -m ansible.builtin.lineinfile -a 'path=/etc/subgid line="jonatan:2222:65536" create=yes'
+```
+
 ## Target Audience
 Målgrupp
 
@@ -907,17 +915,29 @@ Ansvarsfriskrivning. Tex:
 > This is intended for learning, testing, and experimentation. The emphasis is not on security or creating an operational environment suitable for production.
 
 ## Scope and Limitations
-Omfattning och begränsningar
+- Many FreeIPA features have been left out here, so think of this as an introductory project.
+- This lab uses a one-server setup. In a real setting, we would want redundancy in cases where the FreeIPA-server goes down. This is outside the scope of this project but can be accomplished using [replication](https://www.freeipa.org/page/V4/Replica_Setup).
+- This project is limited to a single physical machine, so certain aspects of this project will not apply to high availability environments.
+- Instructions may become outdated as software updates; always verify with the official documentation.
 
 ## Environment
-Miljö som användes
+- FreeIPA version 4.12.2
+- Proxmox VE (9.1.1)
+- Rocky Linux (10.1)
+- Ansible (core 2.16.14)
 
 ## Acknowledgments
-Tack och erkännanden. Tex:
-Big thanks to all the people involved in the material I refer to in my links! I would also like to express gratitude to everyone out there, including my colleagues and friends, who are creating things that help and inspire us to continue learning and exploring this never-ending world of computer technology.
+We would like to thank <a href=https://github.com/rafaelurrutiasilva>Rafael Urrutia</a> for his continuous support and guidance. 
 
 ## References
-Referenser (om det behövs)
+- [FreeIPA](https://www.freeipa.org/)
+- [SMHI](https://www.smhi.se/en/about-smhi)
+- [Project 1: Installing Proxmox on an Asus PN64](https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc)
+- [Project 2: Rocky Linux Golden Image](https://github.com/Filipanderssondev/Rocky_Linux_OS_Base_for_VMs)
+- [Project 3: Ansible on management VM](https://github.com/JonatanHogild/Ansible_on_management_vm)
+- [Project 4: Container stack deployment with Ansible](https://github.com/Filipanderssondev/Container_Stack_Deployment_With_Ansible/)
+- [Ansible builtin dnf module](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/dnf_module.html)
+- [Proxmox firewall standard ip sets](https://pve.proxmox.com/pve-docs/chapter-pve-firewall.html#_standard_ip_set_span_class_monospaced_management_span)
 
 ## Conclusion
-Slutsats
+
