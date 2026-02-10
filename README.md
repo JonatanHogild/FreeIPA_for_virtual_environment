@@ -895,19 +895,14 @@ ansible app -b -m ansible.builtin.lineinfile -a 'path=/etc/subgid line="jonatan:
 ```
 
 ## Target Audience
-This project is for anyone who wants to learn about FreeIPA, and implementing it in a multi-client, multi-user environment. This repo is also part of a larger project aimed at people interested in learning about IT infrastructure and production, and building such an environment from scratch.
+This project is for anyone who wants to learn about FreeIPA, and implementing it in a multi-client, multi-user environment. This repo is also part of a larger project aimed at people interested in learning about IT-infrastructure and production, and building such an environment from scratch.
 
 
 ## Document Status
-Dokumentstatus (om det finns relevant information om dokumentets status, till exempel utkast, slutfört, etc.). Tex:
-> [!NOTE]  
-> My work here is not finished yet. I need, among other things, to supplement with instructions on how each component should be configured to work together as well supplement with an overview image that explains how the whole thing works.
-
+This project is finished, but is part of a larger project that is currently unfinished. This project can be followed indepently of previous projects. 
 
 ## Disclaimer
-Ansvarsfriskrivning. Tex:
-> [!CAUTION]
-> This is intended for learning, testing, and experimentation. The emphasis is not on security or creating an operational environment suitable for production.
+This project is intended for lab-environments, with a focus on learning, testing, and experimentation. Although we keep security in mind, we can't promise that this implementation is suitable for production.
 
 ## Scope and Limitations
 - Many FreeIPA features have not been covered here, so think of this as an introductory project.
