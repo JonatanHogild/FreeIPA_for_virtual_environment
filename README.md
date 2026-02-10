@@ -575,16 +575,17 @@ If no certificate errors show up, and the return output is either JSON or 401/un
 
 ### 3.8 IPA users
 
-Currently, each VM has a couple of users: rocky, jonatan and Filip. These are local Linux-users, and they're not bound to FreeIPA. jonatan and Filip are human users, and we want FreeIPA counterparts. It wouldn't fit in the FreeIPA paradigm to have both, so the local Linux users will have to be removed. rocky is a special case, since it's the Rocky Linux cloud-init user, and not tied to any human user. System users should preferably not be managed by IPA, so we'll ignore rocky (for now).
+Currently, each VM has a couple of users: rocky, jonatan and Filip. These are local Linux-users, and they're not bound to FreeIPA. jonatan and Filip are human users, and we want FreeIPA counterparts. It wouldn't fit in the FreeIPA paradigm to have both, so the local Linux users will have to be removed. rocky is a special case, since it's the Rocky Linux cloud-init user, and not tied to any human user. System users should not be managed by IPA, so we'll ignore rocky.
 
 #### 3.8.1 Remove local users
 
-In case you have important files owned by these users, either consider migrating the user settings to FreeIPA (UID/GID), or using *chown* later. 
+In case you have important files owned by these users, either consider migrating the user ID to the IPA-user, or changing file ownership. 
 
 Delete corresponding Linux-users on all VMs (*remove=yes* deletes user directories):
 ```
 ansible all -b -m user -a "name=jonatan state=absent remove=yes"
 ```
+
 #### 3.8.2 Add IPA users
 
 When working with FreeIPA, you can either use its Web UI, or the CLI. The *ipa* command will offer the same functionality as the Web UI. We'll be using the CLI. 
@@ -812,16 +813,9 @@ ansible all -m ping
 
 ### 3.13 Break-glass admin
 
-It's a good idea to have a local user account with root access on standby. A *break-glass* user, which exists in case of emergencies where FreeIPA becomes unavailable. 
+It's a good idea to have a local user account with root access on standby. A *break-glass* user, which exists in case of emergencies where FreeIPA becomes unavailable.
 
-We've removed local users, with the exception of *rocky*, our Rocky Linux cloud-init user account. rocky is not suitable for the role of a *break-glass* user, for many reasons. In fact, rocky does not fit into our design at all. 
-
-#### 3.13.1 Retire rocky
-
-password-lock rocky:
-```
-ansible all -b -m user -a "name=rocky password_lock=true"
-```
+We've removed local users, with the exception of *rocky*, our Rocky Linux cloud-init user account. rocky is not suitable for the role of a *break-glass* user, nor does it fit with an IAM solution.
 
 #### 3.13.2 Create break-glass user
 We'll use Ansible to create a local user on all VMs. This ensures that the user is properly mirrored across systems.
@@ -901,7 +895,8 @@ ansible app -b -m ansible.builtin.lineinfile -a 'path=/etc/subgid line="jonatan:
 ```
 
 ## Target Audience
-Målgrupp
+This project is for anyone who wants to learn about FreeIPA, and implementing it in a multi-client, multi-user environment. This repo is also part of a larger project aimed at people interested in learning about IT infrastructure and production, and building such an environment from scratch.
+
 
 ## Document Status
 Dokumentstatus (om det finns relevant information om dokumentets status, till exempel utkast, slutfört, etc.). Tex:
@@ -915,9 +910,8 @@ Ansvarsfriskrivning. Tex:
 > This is intended for learning, testing, and experimentation. The emphasis is not on security or creating an operational environment suitable for production.
 
 ## Scope and Limitations
-- Many FreeIPA features have been left out here, so think of this as an introductory project.
-- This lab uses a one-server setup. In a real setting, we would want redundancy in cases where the FreeIPA-server goes down. This is outside the scope of this project but can be accomplished using [replication](https://www.freeipa.org/page/V4/Replica_Setup).
-- This project is limited to a single physical machine, so certain aspects of this project will not apply to high availability environments.
+- Many FreeIPA features have not been covered here, so think of this as an introductory project.
+- This project uses a one-server setup. In a real setting, we want redundancy in cases where the FreeIPA-server goes down. This is outside the scope of this project but can be accomplished using [replication](https://www.freeipa.org/page/V4/Replica_Setup). 
 - Instructions may become outdated as software updates; always verify with the official documentation.
 
 ## Environment
@@ -927,7 +921,7 @@ Ansvarsfriskrivning. Tex:
 - Ansible (core 2.16.14)
 
 ## Acknowledgments
-We would like to thank <a href=https://github.com/rafaelurrutiasilva>Rafael Urrutia</a> for his continuous support and guidance. 
+We would like to thank <a href=https://github.com/rafaelurrutiasilva>Rafael Urrutia</a> for his continuous support and guidance.
 
 ## References
 - [FreeIPA](https://www.freeipa.org/)
@@ -936,8 +930,12 @@ We would like to thank <a href=https://github.com/rafaelurrutiasilva>Rafael Urru
 - [Project 2: Rocky Linux Golden Image](https://github.com/Filipanderssondev/Rocky_Linux_OS_Base_for_VMs)
 - [Project 3: Ansible on management VM](https://github.com/JonatanHogild/Ansible_on_management_vm)
 - [Project 4: Container stack deployment with Ansible](https://github.com/Filipanderssondev/Container_Stack_Deployment_With_Ansible/)
-- [Ansible builtin dnf module](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/dnf_module.html)
-- [Proxmox firewall standard ip sets](https://pve.proxmox.com/pve-docs/chapter-pve-firewall.html#_standard_ip_set_span_class_monospaced_management_span)
+- [Ansible FreeIPA collection](https://github.com/freeipa/ansible-freeipa)
+- [Ansible builtin module - Password parameter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/user_module.html#parameter-password)
+- [FreeIPA Replica Setup](https://www.freeipa.org/page/V4/Replica_Setup)
 
 ## Conclusion
+With this project, we have only managed to scratch the surface of FreeIPA and IAM. Major components of FreeIPA have been left out, like the dogtag certificate system and the web UI. We haven't added things like web application authentication, SELinux user maps or Kerberos ticket policies. Although we kept things relatively simple with users, groups, HBAC and sudo-rules, the granularity and flexibility of these systems have not gone unnoticed. In a real enterprise setting, we would likely need to define more user-groups with varying sets of restrictions imposed on them, we would likely follow IAM standards such as NIST SP 800-63, and much more. 
+
+
 
