@@ -1,0 +1,18 @@
+---
+- name: Configure chrony NTP server
+  hosts: rocky
+  become: yes
+
+  tasks:
+    - name: Ensure NTP server is configured
+      ansible.builtin.lineinfile:
+        path: /etc/chrony.conf
+        regexp: '^pool 2\.rocky\.pool\.ntp\.org iburst'
+        line: 'server xxx.xxx.xxx.xxx iburst'
+        state: present
+      when: ansible_distribution == "Rocky"
+
+    - name: Restart chrony
+      ansible.builtin.service:
+        name: chronyd
+        state: restarted
