@@ -6,7 +6,7 @@ timeline
         : Proxmox VE
     Dec : Rocky Linux golden image : Ansible
     Jan : Container deployment
-         : IAM
+         : FreeIPA
     Feb : Monitoring : Metrics visualization
     Mar-Apr : TBA
 
