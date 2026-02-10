@@ -3,9 +3,9 @@
 timeline
     title Overview of Internship projects
     Nov : Introduction + Planning
-        : Proxmox
+        : Proxmox VE
     Dec : Rocky Linux golden image : Ansible
-    Jan : Container Deployment
+    Jan : Container deployment
          : IAM
     Feb : Monitoring : Metrics visualization
     Mar-Apr : TBA
