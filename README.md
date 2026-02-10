@@ -782,7 +782,7 @@ sudo -l
 
 ### 3.12 SSH key management
 
-At this point, Ansible won't work with our new IPA-users. This is because we haven't generated and shared SSH-keys for these users yet. We could do this like we've done in previous labs, but an alternative solution is using FreeIPA to store and manage our public keys for us. This makes management of SSH keys much more convinient, and scales better. It also reinforces the FreeIPA-server as our central identity and access management solution, and single source of truth. 
+At this point, Ansible won't work with our new IPA-users. This is because we haven't generated and shared SSH-keys for these users yet. We could do this like we've done in previous labs, but an alternative solution is using FreeIPA to store and manage our public keys for us. This makes management of SSH keys much more convenient, and scales better. It also reinforces the FreeIPA-server as our central identity and access management solution, and single source of truth. 
 
 Go on the *mgmt* VM and change ownership and permissions of ansible files:
 ```
