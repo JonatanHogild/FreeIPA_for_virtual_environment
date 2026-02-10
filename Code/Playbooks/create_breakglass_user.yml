@@ -1,0 +1,30 @@
+---
+- name: Create breakglass user
+  hosts: rocky
+  become: true
+  vars:
+    breakglass_user: breakglass
+    
+  tasks:
+    - name: Create breakglass user
+      ansible.builtin.user:
+        name: "{{ breakglass_user }}"
+        password: "{{ vault_breakglass_password_hash }}"
+        comment: "Emergency admin"
+        shell: /bin/bash
+        create_home: true
+        password_lock: false
+
+    - name: Set permissions
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/"{{ breakglass_user }}"
+        content: |
+          "{{ breakglass_user }}" ALL=(ALL) ALL
+        owner: root
+        group: root
+        mode: '0440'
+        validate: /usr/sbin/visudo -cf %s
+
+    - name: Verify sudo works
+      ansible.builtin.command: sudo -l -U "{{ breakglass_user }}"
+      changed_when: false
