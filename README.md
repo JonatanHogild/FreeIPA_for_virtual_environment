@@ -21,7 +21,7 @@ Implementation of the identity and authentication management solution FreeIPA fo
 7. [Scope and Limitations](#scope-and-limitations)
 8. [Environment](#environment)
 9. [Acknowledgments](#acknowledgments)
-10. [Implementation](#implementation)
+10. [Implementation](#implementation) <br>
     10.1 [Prepare a new VM](#31-prepare-a-new-vm) <br>
     10.2 [DNS](#32-dns) <br>
     10.3 [FreeIPA installation](#33-freeipa-installation) <br>
