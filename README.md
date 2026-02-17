@@ -1,5 +1,5 @@
 # FreeIPA for a virtual environment
-<img alt="MyLogo" src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/image.png" align=left>
+<img src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/freeipa.png" align=left>
 Jonatan Högild och Filip Andersson<br>
 24-02-2026<br>
 
