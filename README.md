@@ -50,7 +50,7 @@ _[Other projects in our virtual IT-enviroment](#other-projects-in-our-virtual-it
 The goal of this project is to build a modern identity management solution that is robust, secure and scalable. Users and groups should be handled centrally, instead of existing as separate local entities on each host. Policies and rules dictate access and authentication. This should not come at a cost for the end-user, who should still be able to use their machines without significant hindrance. 
 
 ## Method
-
+FreeIPA will be installed on a new virtual machine that will act as a FreeIPA-server. DNS and NTP will be properly implemented in the virtual environment. The Proxmox firewall will be adjusted in anticipation of new protocols and traffic flows. FreeIPA-clients will be installed on all other VMs using Ansible. When all this is set up, users and groups will be created with FreeIPA, then rules and policies. SSH-keys will be tied to respective IPA-users. Emergency local admin accounts will be created on all VMs using Ansible.
 
 ## Target Audience
 This project is for anyone who wants to learn about FreeIPA, and implementing it in a multi-client, multi-user environment. This repo is also part of a larger project aimed at people interested in learning about IT-infrastructure and production, and building such an environment from scratch.
