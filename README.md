@@ -1,6 +1,6 @@
 # FreeIPA for a virtual environment
 
-<img width="" src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/freeipa.png"> 
+<img src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/freeipa-for-virtual-env.png"> 
 
 
 **FreeIPA for a virtual enviroment**
@@ -37,11 +37,14 @@ Implementation of the identity and authentication management solution FreeIPA fo
     10.13 [Break-glass admin](#313-break-glass-admin) <br>
     10.14 [Subordinate UID/GID](#314-subordinate-uidgid) <br>
 11. [Conclusion](#conclusion)
-12. [References](#references) 
+12. [References](#references)<br>
+    12.1 [Other projects in our virtual IT-enviroment](#other-projects-in-our-virtual-it-enviroment)
 
 ## Introduction
-**Welcome!**
-In this lab, we'll dive into [FreeIPA](https://www.freeipa.org/), an IAM-solution for Linux. It is no small task to manage hundreds, or even thousands of users across an enterprise. Identity and Access Management (IAM) is a framework of policies and technologies brought together to handle this issue. With this implementation of FreeIPA, we set out to manage identities and authentication in our small virtual environment as if it were a large enterprise environment. A lot will be covered in this lab: DNS, installation of FreeIPA-servers and clients, IPA users and groups, host-based access control, sudo rules, and much more. This is the fifth project <a href="https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc/blob/main/Extra/Mermaid/Projects.md">in a series of projects</a>, with the goal of setting up a complete virtualized, automated, and monitored IT-Enviroment as a part of our internship at [The Swedish Meteorological and Hydrological Institute (SMHI)](https://www.smhi.se/en/about-smhi). <br>
+**Welcome!** <br>
+_In this project we will dive into [FreeIPA](https://www.freeipa.org/), an IAM-solution for Linux. It is no small task to manage hundreds, or even thousands of users across an enterprise. Identity and Access Management (IAM) is a framework of policies and technologies brought together to handle this issue. With this implementation of FreeIPA, we set out to manage identities and authentication in our small virtual environment as if it were a large enterprise environment. A lot will be covered in this lab: DNS, installation of FreeIPA-servers and clients, IPA users and groups, host-based access control, sudo rules, and much more. This is the fifth project <a href="https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc/blob/main/Extra/Mermaid/Projects.md">in a series of projects</a>, with the goal of setting up a complete virtualized, automated, and monitored IT-Enviroment as a part of our internship at [The Swedish Meteorological and Hydrological Institute (SMHI)](https://www.smhi.se/en/about-smhi)._ <br>
+
+_[Other projects in our virtual IT-enviroment](#other-projects-in-our-virtual-it-enviroment)_
 
 ## Goals and Objectives
 The goal of this project is to build a modern identity management solution that is robust, secure and scalable. Users and groups should be handled centrally, instead of existing as separate local entities on each host. Policies and rules dictate access and authentication. This should not come at a cost for the end-user, who should still be able to use their machines without significant hindrance. 
@@ -928,10 +931,10 @@ With this project, we have only managed to scratch the surface of FreeIPA and IA
 - [Ansible builtin module - Password parameter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/user_module.html#parameter-password)
 - [FreeIPA Replica Setup](https://www.freeipa.org/page/V4/Replica_Setup)
 
-**Other parts in our project:**
-- Part 1 - [Installing Proxmox on an Asus PN64](https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc)
-- Part 2 - [Rocky Linux Golden Image](https://github.com/Filipanderssondev/Rocky_Linux_OS_Base_for_VMs)
-- Part 3 - [Ansible on management VM](https://github.com/JonatanHogild/Ansible_on_management_vm)
-- Part 4 - [Container stack deployment with Ansible](https://github.com/Filipanderssondev/Container_Stack_Deployment_With_Ansible/)
+### Other projects in our virtual IT-enviroment:
+- Project 1 - [Proxmox on Nuc](https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc/)
+- Project 2 - [Rocky Linux golden image for cloning](https://github.com/Filipanderssondev/Rocky_Linux_OS_Base_for_VMs)
+- Project 3 - [Ansible on management VM](https://github.com/JonatanHogild/Ansible_on_management_vm)
+- Project 4 - [Container stack deployment and monitoring with ansible](https://github.com/Filipanderssondev/Container_Stack_Deployment_With_Ansible)
 
 
