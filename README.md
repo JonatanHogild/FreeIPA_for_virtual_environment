@@ -14,7 +14,7 @@ Implementation of the identity and authentication management solution FreeIPA fo
 
 1. [Introduction](#introduction)
 2. [Goals and Objectives](#goals-and-objectives)
-3. [Method](#method) <br>
+3. [Method](#method)
 4. [Target Audience](#target-audience)
 5. [Document Status](#document-status)
 6. [Disclaimer](#disclaimer)
@@ -22,32 +22,32 @@ Implementation of the identity and authentication management solution FreeIPA fo
 8. [Environment](#environment)
 9. [Acknowledgments](#acknowledgments)
 10. [Implementation](#implementation) <br>
-    10.1 [Prepare a new VM](#31-prepare-a-new-vm) <br>
-    10.2 [DNS](#32-dns) <br>
-    10.3 [FreeIPA installation](#33-freeipa-installation) <br>
-    10.4 [Chrony/NTP](#34-chronyntp) <br>
-    10.5 [Firewall configuration](#35-firewall-configuration) <br>
-    10.6 [Set up FreeIPA-clients with Ansible](#36-set-up-freeipa-clients-with-ansible) <br>
-    10.7 [Verify that FreeIPA works so far](#37-verify-that-freeipa-works-so-far) <br>
-    10.8 [IPA users](#38-ipa-users) <br>
-    10.9 [IPA groups](#39-ipa-groups) <br>
-    10.10 [HBAC](#310-hbac) <br>
-    10.11 [sudo rules](#311-sudo-rules) <br>
-    10.12 [SSH key management](#312-ssh-key-management) <br>
-    10.13 [Break-glass admin](#313-break-glass-admin) <br>
-    10.14 [Subordinate UID/GID](#314-subordinate-uidgid) <br>
+    10.1 [Prepare a new VM](#prepare-a-new-vm) <br>
+    10.2 [DNS](#dns) <br>
+    10.3 [FreeIPA installation](#freeipa-installation) <br>
+    10.4 [Chrony/NTP](#chronyntp) <br>
+    10.5 [Firewall configuration](#firewall-configuration) <br>
+    10.6 [Set up FreeIPA-clients with Ansible](#set-up-freeipa-clients-with-ansible) <br>
+    10.7 [Verify that FreeIPA works so far](#verify-that-freeipa-works-so-far) <br>
+    10.8 [IPA users](#ipa-users) <br>
+    10.9 [IPA groups](#ipa-groups) <br>
+    10.10 [HBAC](#hbac) <br>
+    10.11 [sudo rules](#sudo-rules) <br>
+    10.12 [SSH key management](#ssh-key-management) <br>
+    10.13 [Break-glass admin](#break-glass-admin) <br>
+    10.14 [Subordinate UID/GID](#subordinate-uidgid) <br>
 11. [Conclusion](#conclusion)
 12. [References](#references)<br>
     12.1 [Other projects in our virtual IT-enviroment](#other-projects-in-our-virtual-it-enviroment)
 
 ## Introduction
 **Welcome!** <br>
-_In this project we will dive into [FreeIPA](https://www.freeipa.org/), an IAM-solution for Linux. It is no small task to manage hundreds, or even thousands of users across an enterprise. Identity and Access Management (IAM) is a framework of policies and technologies brought together to handle this issue. With this implementation of FreeIPA, we set out to manage identities and authentication in our small virtual environment as if it were a large enterprise environment. A lot will be covered in this lab: DNS, installation of FreeIPA-servers and clients, IPA users and groups, host-based access control, sudo rules, and much more. This is the fifth project <a href="https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc/blob/main/Extra/Mermaid/Projects.md">in a series of projects</a>, with the goal of setting up a complete virtualized, automated, and monitored IT-Enviroment as a part of our internship at [The Swedish Meteorological and Hydrological Institute (SMHI)](https://www.smhi.se/en/about-smhi)._ <br>
+In this project we will dive into [FreeIPA](https://www.freeipa.org/), an IAM-solution for Linux. It is no small task to manage hundreds, or even thousands of users across an enterprise. Identity and Access Management (IAM) is a framework of policies and technologies brought together to handle this issue. With this implementation of FreeIPA, we set out to manage identities and authentication in our small virtual environment as if it were a large enterprise environment. A lot will be covered in this lab: DNS, installation of FreeIPA-servers and clients, IPA users and groups, host-based access control, sudo rules, and much more. This is the fifth project <a href="https://github.com/rafaelurrutiasilva/Proxmox_on_Nuc/blob/main/Extra/Mermaid/Projects.md">in a series of projects</a>, with the goal of setting up a complete virtualized, automated, and monitored IT-Enviroment as a part of our internship at [The Swedish Meteorological and Hydrological Institute (SMHI)](https://www.smhi.se/en/about-smhi). <br>
 
 _[Other projects in our virtual IT-enviroment](#other-projects-in-our-virtual-it-enviroment)_
 
 ## Goals and Objectives
-The goal of this project is to build a modern identity management solution that is robust, secure and scalable. Users and groups should be handled centrally, instead of existing as separate local entities on each host. Policies and rules dictate access and authentication. This should not come at a cost for the end-user, who should still be able to use their machines without significant hindrance. 
+The goal of this project is to build a modern identity management solution that is robust, secure and scalable. Users, user-groups, access policies and rules should be handled centrally, instead of existing as separate local entities on each host.
 
 ## Method
 FreeIPA will be installed on a new virtual machine that will act as a FreeIPA-server. DNS and NTP will be properly implemented in the virtual environment. The Proxmox firewall will be adjusted in anticipation of new protocols and traffic flows. FreeIPA-clients will be installed on all other VMs using Ansible. When all this is set up, users and groups will be created with FreeIPA, then rules and policies. SSH-keys will be tied to respective IPA-users. Emergency local admin accounts will be created on all VMs using Ansible.
@@ -57,21 +57,31 @@ This project is for anyone who wants to learn about FreeIPA, and implementing it
 
 
 ## Document Status
-This project is finished, but is part of a larger project that is currently unfinished. This project can be followed indepently of previous projects. 
+> [!NOTE]
+> This repo is completed.
+> This repo is part of a larger ongoing project.
 
 ## Disclaimer
-This project is intended for lab-environments, with a focus on learning, testing, and experimentation. Although we keep security in mind, we can't promise that this implementation is suitable for production.
+> [!CAUTION]
+> This is intended for learning, testing, and experimentation. The emphasis is not on security or creating an operational environment suitable for production.
 
 ## Scope and Limitations
-- Many FreeIPA features have not been covered here, so think of this as an introductory project.
-- This project uses a one-server setup. In a real setting, we want redundancy in cases where the FreeIPA-server goes down. This is outside the scope of this project but can be accomplished using [replication](https://www.freeipa.org/page/V4/Replica_Setup). 
-- Instructions may become outdated as software updates; always verify with the official documentation.
+* Many FreeIPA features have not been covered here, so think of this as an introductory project.
+* This project uses a one-server setup. In a real setting, we want redundancy in cases where the FreeIPA-server goes down. This is outside the scope of this project but can be accomplished using [replication](https://www.freeipa.org/page/V4/Replica_Setup). 
+* This guide is not intended for production-grade, multi-node clusters or advanced HA setups.
+* Hardware compatibility varies; If unsure, check hardware requirements before proceeding.
+* Instructions may become outdated as software updates; always verify with the official documentation.
+* Sensetive information will be withheld. This will not hinder participation in the guide.
 
 ## Environment
-- FreeIPA version 4.12.2
-- Proxmox VE (9.1.1)
-- Rocky Linux (10.1)
-- Ansible (core 2.16.14)
+ - Asus PN64 ax210NGW
+   - Intel® Core™ i7-12700H 
+   - 1TB disk
+   - 64 GB memory
+ - FreeIPA (4.12.2)
+ - Proxmox VE (9.1.1)
+ - Rocky Linux (10.1)
+ - Ansible (core 2.16.14)
 
 ## Acknowledgments
 We would like to thank <a href=https://github.com/rafaelurrutiasilva>Rafael Urrutia</a> for his continuous support and guidance.
