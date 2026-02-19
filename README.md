@@ -57,9 +57,8 @@ This project is for anyone who wants to learn about FreeIPA, and implementing it
 
 
 ## Document Status
-> [!NOTE]
-> This repo is completed.
-> This repo is part of a larger ongoing project.
+This repository is considered complete and officially published.<br>
+Future improvements, refinements, or corrections may be introduced through controlled updates. Any changes will be versioned and documented in the commit history.
 
 ## Disclaimer
 > [!CAUTION]
