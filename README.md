@@ -1,5 +1,5 @@
 # FreeIPA for a virtual environment
-
+<!--
 <img src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/freeipa-for-virtual-env.png"> 
 
 
@@ -9,6 +9,31 @@
 
 ## Abstract
 Implementation of the identity and authentication management solution FreeIPA for a virtual production-environment.
+-->
+
+<div>
+  <img src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/freeipa-for-virtual-env.png" width="300" align="left" />
+  <h2>Abstract</h2>
+  <p> 
+	Implementation of the identity and authentication management solution FreeIPA for a virtual production-environment.
+    <br>
+	<br>
+	<br>
+	<br>
+	<br>
+    <br>
+    <strong>FreeIPA for virtual enviroment</strong> <br>
+    <strong>Authors:</strong>
+    <i><a href="https://github.com/Filipanderssondev">Filip Andersson</a></i>
+    and
+    <i><a href="https://github.com/JonatanHogild">Jonatan Högild</a></i>
+    <br>
+    24-02-2026
+    <br clear="left"/>
+  </p>
+</div>
+<br>
+
 
 ## Table of Contents
 
