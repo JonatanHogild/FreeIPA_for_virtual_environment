@@ -24,9 +24,9 @@ Implementation of the identity and authentication management solution FreeIPA fo
     <br>
     <strong>FreeIPA for virtual enviroment</strong> <br>
     <strong>Authors:</strong>
-    <i><a href="https://github.com/Filipanderssondev">Filip Andersson</a></i>
-    and
     <i><a href="https://github.com/JonatanHogild">Jonatan Högild</a></i>
+    and
+    <i><a href="https://github.com/Filipanderssondev">Filip Andersson</a></i>
     <br>
     24-02-2026
     <br clear="left"/>
