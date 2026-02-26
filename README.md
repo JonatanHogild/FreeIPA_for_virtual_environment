@@ -15,7 +15,7 @@ Implementation of the identity and authentication management solution FreeIPA fo
   <img src="https://github.com/JonatanHogild/FreeIPA_for_virtual_environment/blob/main/images/freeipa-for-virtual-env.png" width="300" align="left" />
   <h2>Abstract</h2>
   <p> 
-	Implementation of the identity and authentication management solution FreeIPA for a virtual production-environment.
+	This project will go through the implementation of the identity and authentication management solution FreeIPA for a virtual production-environment. A FreeIPA-server will be installed on a separate virtual machine, and FreeIPA-clients will be installed on the other VMs. Users and access-rules will be set up to be handled centrally by the FreeIPA-server. 
     <br>
 	<br>
 	<br>
@@ -75,7 +75,7 @@ _[Other projects in our virtual IT-enviroment](#other-projects-in-our-virtual-it
 The goal of this project is to build a modern identity management solution that is robust, secure and scalable. Users, user-groups, access policies and rules should be handled centrally, instead of existing as separate local entities on each host.
 
 ## Method
-FreeIPA will be installed on a new virtual machine that will act as a FreeIPA-server. DNS and NTP will be properly implemented in the virtual environment. The Proxmox firewall will be adjusted in anticipation of new protocols and traffic flows. FreeIPA-clients will be installed on all other VMs using Ansible. When all this is set up, users and groups will be created with FreeIPA, then rules and policies. SSH-keys will be tied to respective IPA-users. Emergency local admin accounts will be created on all VMs using Ansible.
+FreeIPA will be installed on a new virtual machine that will act as a FreeIPA-server. DNS and NTP will be properly implemented in the virtual environment to handle FreeIPA requests. The Proxmox firewall will be adjusted in anticipation of new protocols and traffic flows, ensuring FreeIPA functionality without being too permissive. FreeIPA-clients will be installed on all other VMs with Ansible, using the FreeIPA collection. An Ansible Vault will be made to safeguard passwords used in the automation process. When all this is set up, IPA-users and user-groups will be created, then host-groups, HBAC-rules and sudo-rules, defining access policies across hosts. SSH-keys will be tied to respective IPA-users. Emergency local admin accounts will be created on all VMs using Ansible.
 
 ## Target Audience
 This project is for anyone who wants to learn about FreeIPA, and implementing it in a multi-client, multi-user environment. This repo is also part of a larger project aimed at people interested in learning about IT-infrastructure and production, and building such an environment from scratch.
@@ -428,7 +428,7 @@ Log level: info
 #### Apply Security groups
 On the VM-level, apply the *freeipa-server* security-group to the *ipa-01* VM. For the rest of the VMs, apply the *freeipa-client* security group.
 
-I also suggest adding a comment to the two new security-groups, stating that they do not include rules for HTTP, HTTPS and NTP. The name of the *dns* IP set can also be changed to *dns-internal*. Update the DNS security group with the new name. These changes help reflect the current state of the project. 
+I also suggest adding a comment to the two new security-groups, stating that they do not include rules for HTTP, HTTPS and NTP. The name of the *dns* IP set can also be changed to *dns-internal*. Update the DNS security group with the new name. These changes help reflect the current state of the environment. 
 
 ### Set up FreeIPA-clients with Ansible
 
