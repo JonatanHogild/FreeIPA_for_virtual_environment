@@ -20,8 +20,6 @@ Implementation of the identity and authentication management solution FreeIPA fo
 	<br>
 	<br>
 	<br>
-	<br>
-    <br>
     <strong>FreeIPA for virtual enviroment</strong> <br>
     <strong>Authors:</strong>
     <i><a href="https://github.com/JonatanHogild">Jonatan Högild</a></i>
